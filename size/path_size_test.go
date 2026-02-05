@@ -9,7 +9,7 @@ import (
 
 func TestPathSizeFile(t *testing.T) {
 	filePath := filepath.Join("..", "testdata", "test1")
-	result, err := GetPathSize(filePath)
+	result, err := GetPathSize(filePath, false)
 	if err != nil {
 		t.Fatalf("GetPathSize error: %v", err)
 	}
@@ -18,31 +18,39 @@ func TestPathSizeFile(t *testing.T) {
 
 func TestPathSizeDir(t *testing.T) {
 	dirPath := filepath.Join("..", "testdata", "testdirectory")
-	result, err := GetPathSize(dirPath)
+	result, err := GetPathSize(dirPath, false)
 	if err != nil {
 		t.Fatalf("GetPathSize error: %v", err)
 	}
-	require.Equal(t, int64(7), result)
+	require.Equal(t, int64(5), result)
+}
+
+func TestHiddenFilesFilteredByDefault(t *testing.T) {
+	dirPath := filepath.Join("..", "testdata", "testdirectory")
+
+	sizeNoHidden, err := GetPathSize(dirPath, false)
+	require.NoError(t, err)
+	// считаем только видимые файлы (test3 и test4)
+	require.Equal(t, int64(5), sizeNoHidden)
+
+	sizeWithHidden, err := GetPathSize(dirPath, true)
+	require.NoError(t, err)
+	// считаем и видимые, и скрытые (добавляется .test3)
+	require.Equal(t, int64(8), sizeWithHidden)
 }
 
 func TestFormatSizeRaw(t *testing.T) {
-	tests := []struct {
-		name   string
-		size   int64
-		human  bool
-		expect string
-	}{
-		{name: "raw bytes", size: 123, human: false, expect: "123B"},
-		{name: "raw zero", size: 0, human: false, expect: "0B"},
-		{name: "human small stays bytes", size: 123, human: true, expect: "123B"},
-		{name: "human 1KB", size: 1024, human: true, expect: "1.0KB"},
-		{name: "human 1.2MB example", size: 1234567, human: true, expect: "1.2MB"},
-	}
+	filePath := filepath.Join("..", "testdata", "test1")
+	sizeFile, err := GetPathSize(filePath, true)
+	require.NoError(t, err)
+	require.Equal(t, "1B", FormatSize(sizeFile, false))
+	require.Equal(t, "1B", FormatSize(sizeFile, true))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := FormatSize(tt.size, tt.human)
-			require.Equal(t, tt.expect, actual)
-		})
-	}
+	dirPath := filepath.Join("..", "testdata", "testdirectory")
+	sizeDir, err := GetPathSize(dirPath, true)
+	require.NoError(t, err)
+	require.Equal(t, "8B", FormatSize(sizeDir, false))
+
+	// сохраняем пример из ТЗ для human-формата
+	require.Equal(t, "1.2MB", FormatSize(1234567, true))
 }

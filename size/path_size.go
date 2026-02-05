@@ -3,10 +3,11 @@ package size
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 // GetPathSize вычисляет суммарный размер файла или (неглубоко) директории в байтах.
-func GetPathSize(path string) (int64, error) {
+func GetPathSize(path string, all bool) (int64, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return 0, err
@@ -14,6 +15,9 @@ func GetPathSize(path string) (int64, error) {
 
 	var size int64
 	if !info.IsDir() {
+		if !all && strings.HasPrefix(info.Name(), ".") {
+			return 0, nil
+		}
 		size = info.Size()
 	} else {
 		entries, err := os.ReadDir(path)
@@ -22,6 +26,9 @@ func GetPathSize(path string) (int64, error) {
 		}
 		for _, entry := range entries {
 			if entry.IsDir() {
+				continue
+			}
+			if !all && strings.HasPrefix(info.Name(), ".") {
 				continue
 			}
 			fInfo, err := entry.Info()
