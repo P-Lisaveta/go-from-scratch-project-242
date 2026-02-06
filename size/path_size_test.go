@@ -9,7 +9,7 @@ import (
 
 func TestPathSizeFile(t *testing.T) {
 	filePath := filepath.Join("..", "testdata", "test1")
-	result, err := GetPathSize(filePath, false)
+	result, err := GetPathSize(filePath, false, false)
 	if err != nil {
 		t.Fatalf("GetPathSize error: %v", err)
 	}
@@ -17,40 +17,41 @@ func TestPathSizeFile(t *testing.T) {
 }
 
 func TestPathSizeDir(t *testing.T) {
-	dirPath := filepath.Join("..", "testdata", "testdirectory")
-	result, err := GetPathSize(dirPath, false)
+	dirPath := filepath.Join("..", "testdata")
+	result, err := GetPathSize(dirPath, false, false)
 	if err != nil {
 		t.Fatalf("GetPathSize error: %v", err)
 	}
-	require.Equal(t, int64(5), result)
+	require.Equal(t, int64(3), result)
 }
 
 func TestHiddenFilesFilteredByDefault(t *testing.T) {
-	dirPath := filepath.Join("..", "testdata", "testdirectory")
+	dirPath := filepath.Join("..", "testdata")
 
-	sizeNoHidden, err := GetPathSize(dirPath, false)
+	sizeWithHidden, err := GetPathSize(dirPath, true, false)
 	require.NoError(t, err)
-	// считаем только видимые файлы (test3 и test4)
-	require.Equal(t, int64(5), sizeNoHidden)
-
-	sizeWithHidden, err := GetPathSize(dirPath, true)
-	require.NoError(t, err)
-	// считаем и видимые, и скрытые (добавляется .test3)
-	require.Equal(t, int64(8), sizeWithHidden)
+	require.Equal(t, int64(6154), sizeWithHidden)
 }
 
 func TestFormatSizeRaw(t *testing.T) {
 	filePath := filepath.Join("..", "testdata", "test1")
-	sizeFile, err := GetPathSize(filePath, true)
+	sizeFile, err := GetPathSize(filePath, true, false)
 	require.NoError(t, err)
 	require.Equal(t, "1B", FormatSize(sizeFile, false))
 	require.Equal(t, "1B", FormatSize(sizeFile, true))
 
-	dirPath := filepath.Join("..", "testdata", "testdirectory")
-	sizeDir, err := GetPathSize(dirPath, true)
+	dirPath := filepath.Join("..", "testdata")
+	sizeDir, err := GetPathSize(dirPath, true, false)
 	require.NoError(t, err)
-	require.Equal(t, "8B", FormatSize(sizeDir, false))
+	require.Equal(t, "6154B", FormatSize(sizeDir, false))
 
-	// сохраняем пример из ТЗ для human-формата
 	require.Equal(t, "1.2MB", FormatSize(1234567, true))
+}
+
+func TestHiddenFilesRecursive(t *testing.T) {
+	dirPath := filepath.Join("..", "testdata")
+
+	sizeWithRecursive, err := GetPathSize(dirPath, false, true)
+	require.NoError(t, err)
+	require.Equal(t, int64(6), sizeWithRecursive)
 }

@@ -3,47 +3,65 @@ package size
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-// GetPathSize вычисляет суммарный размер файла или (неглубоко) директории в байтах.
-func GetPathSize(path string, all bool) (int64, error) {
+// GetPathSize вычисляет суммарный размер файла или директории в байтах.
+func GetPathSize(path string, all bool, recursive bool) (int64, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return 0, err
 	}
 
-	var size int64
+	// если это файл
 	if !info.IsDir() {
 		if !all && strings.HasPrefix(info.Name(), ".") {
 			return 0, nil
 		}
-		size = info.Size()
-	} else {
-		entries, err := os.ReadDir(path)
+		return info.Size(), nil
+	}
+
+	// если это директория
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return 0, err
+	}
+
+	var size int64
+
+	for _, entry := range entries {
+		name := entry.Name()
+
+		// пропускаем скрытые файлы/директории, если --all не указан
+		if !all && strings.HasPrefix(name, ".") {
+			continue
+		}
+
+		fullPath := filepath.Join(path, name)
+
+		if entry.IsDir() {
+			if recursive {
+				subSize, err := GetPathSize(fullPath, all, recursive)
+				if err != nil {
+					return 0, err
+				}
+				size += subSize
+			}
+			continue
+		}
+
+		info, err := entry.Info()
 		if err != nil {
 			return 0, err
 		}
-		for _, entry := range entries {
-			if entry.IsDir() {
-				continue
-			}
-			if !all && strings.HasPrefix(info.Name(), ".") {
-				continue
-			}
-			fInfo, err := entry.Info()
-			if err != nil {
-				return 0, err
-			}
-			size += fInfo.Size()
-		}
+		size += info.Size()
 	}
+
 	return size, nil
 }
 
 // FormatSize форматирует размер в байтах.
-// Если human == false, возвращает строку вида "123B".
-// Если human == true, конвертирует в человекочитаемый формат (B, KB, MB, GB, TB, PB, EB).
 func FormatSize(size int64, human bool) string {
 	if size < 0 {
 		size = 0
@@ -62,6 +80,5 @@ func FormatSize(size int64, human bool) string {
 		i++
 	}
 
-	// для KB и выше используем один знак после запятой
 	return fmt.Sprintf("%.1f%s", s, units[i])
 }
