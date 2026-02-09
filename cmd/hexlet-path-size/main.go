@@ -1,7 +1,7 @@
 package main
 
 import (
-	size "code/code"
+	size "code/internal"
 	"context"
 	"fmt"
 	"log"
