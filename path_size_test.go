@@ -1,4 +1,4 @@
-package size
+package code
 
 import (
 	"path/filepath"
@@ -8,6 +8,7 @@ import (
 )
 
 func TestPathSizeFile(t *testing.T) {
+	
 	filePath := filepath.Join("..", "testdata", "test1")
 	result, err := GetPathSize(filePath, false)
 	if err != nil {
