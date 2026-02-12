@@ -1,7 +1,8 @@
 package main
 
 import (
-	size "code/internal"
+
+	"code"
 	"context"
 	"fmt"
 	"log"
@@ -11,6 +12,7 @@ import (
 )
 
 func main() {
+
 	cmd := &cli.Command{
 		Name:  "hexlet-path-size",
 		Usage: "print size of a file or directory; supports -r (recursive), -H (human-readable), -a (include hidden)",
@@ -40,11 +42,13 @@ func main() {
 			}
 
 			path := cmd.Args().Get(0)
-			rawSize, err := size.GetPathSize(path, cmd.Bool("all"), cmd.Bool("recursive"))
+
+			rawSize, err := code.GetPathSize(path, cmd.Bool("all"))
+
 			if err != nil {
 				return err
 			}
-			formattedSize := size.FormatSize(rawSize, cmd.Bool("human"))
+			formattedSize := code.FormatSize(rawSize, cmd.Bool("human"))
 			fmt.Printf("%s\t%s\n", formattedSize, path)
 			return nil
 		},
