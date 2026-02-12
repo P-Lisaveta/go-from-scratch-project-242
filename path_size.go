@@ -18,29 +18,38 @@ func GetPathSize(path string, recursive, human, all bool) (int64, error) {
 		if !all && strings.HasPrefix(info.Name(), ".") {
 			return 0, nil
 		}
-		size = info.Size()
-	} else {
-		entries, err := os.ReadDir(path)
+		// Читаем ТОЛЬКО содержимое файла, игнорируем метаданные
+		f, err := os.Open(path)
 		if err != nil {
 			return 0, err
 		}
-		for _, entry := range entries {
-			if entry.IsDir() && recursive {
-				subSize, err := GetPathSize(filepath.Join(path, entry.Name()), recursive, human, all)
-				if err != nil {
-					return 0, err
-				}
-				size += subSize
-			}
-			if !all && strings.HasPrefix(entry.Name(), ".") {
-				continue
-			}
-			fInfo, err := entry.Info()
-			if err != nil {
-				return 0, err
-			}
-			size += fInfo.Size()
+		defer f.Close()
+		stat, err := f.Stat()
+		if err != nil {
+			return 0, err
 		}
+		size = stat.Size() // Логический размер
+		return size, nil
+	}
+
+	// Директории - суммируем размеры вложенных файлов
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+		if !all && strings.HasPrefix(name, ".") {
+			continue
+		}
+
+		entryPath := filepath.Join(path, name)
+		entrySize, err := GetPathSize(entryPath, recursive, human, all)
+		if err != nil {
+			return 0, err
+		}
+		size += entrySize
 	}
 	return size, nil
 }
