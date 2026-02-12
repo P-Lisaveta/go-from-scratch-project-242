@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"code"
 	"context"
 	"fmt"
@@ -43,12 +42,18 @@ func main() {
 
 			path := cmd.Args().Get(0)
 
-			rawSize, err := code.GetPathSize(path, cmd.Bool("all"))
+			opts := code.Options{
+				Recursive: cmd.Bool("recursive"),
+				Human:     cmd.Bool("human"),
+				All:       cmd.Bool("all"),
+			}
 
+			rawSize, err := code.GetPathSize(path, opts)
 			if err != nil {
 				return err
 			}
-			formattedSize := code.FormatSize(rawSize, cmd.Bool("human"))
+
+			formattedSize := code.FormatSize(rawSize, opts)
 			fmt.Printf("%s\t%s\n", formattedSize, path)
 			return nil
 		},
