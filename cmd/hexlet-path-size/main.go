@@ -38,7 +38,7 @@ func main() {
 			}
 			path := cmd.Args().Get(0)
 
-			rawSize, err := code.GetPathSize(
+			sizeStr, err := code.GetPathSize( // ← string вместо int64
 				path,
 				cmd.Bool("recursive"),
 				cmd.Bool("human"),
@@ -49,8 +49,7 @@ func main() {
 				return err
 			}
 
-			formattedSize := code.FormatSize(rawSize, cmd.Bool("human"))
-			fmt.Printf("%s\t%s\n", formattedSize, path)
+			fmt.Printf("%s\t%s\n", sizeStr, path) // ← sizeStr уже "7B"
 			return nil
 		},
 	}
