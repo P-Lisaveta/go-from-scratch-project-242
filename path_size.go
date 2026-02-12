@@ -11,23 +11,23 @@ import (
 func GetPathSize(path string, recursive, human, all bool) (string, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
-		return "", err
+		return "0B", err
 	}
 
 	var size int64
 	if !info.IsDir() {
 		if !all && strings.HasPrefix(info.Name(), ".") {
-			return "", nil
+			return "0B", nil
 		}
 		// Читаем ТОЛЬКО содержимое файла, игнорируем метаданные
 		f, err := os.Open(path)
 		if err != nil {
-			return "", err
+			return "0B", err
 		}
 		defer f.Close()
 		stat, err := f.Stat()
 		if err != nil {
-			return "", err
+			return "0B", err
 		}
 		size = stat.Size() // Логический размер
 		return fmt.Sprintf("%dB", size), nil
@@ -36,7 +36,7 @@ func GetPathSize(path string, recursive, human, all bool) (string, error) {
 	// Директории - суммируем размеры вложенных файлов
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		return "", err
+		return "0B", err
 	}
 
 	for _, entry := range entries {
@@ -48,7 +48,7 @@ func GetPathSize(path string, recursive, human, all bool) (string, error) {
 		entryPath := filepath.Join(path, name)
 		entrySize, err := GetPathSize(entryPath, recursive, human, all)
 		if err != nil {
-			return "", err
+			return "0B", err
 		}
 		sizeStr, _ := strconv.ParseInt(entrySize, 10, 64)
 		size += sizeStr
