@@ -58,6 +58,5 @@ func FormatSize(size int64, human bool) string {
 		i++
 	}
 
-	// для KB и выше используем один знак после запятой
 	return fmt.Sprintf("%.1f%s", s, units[i])
 }
