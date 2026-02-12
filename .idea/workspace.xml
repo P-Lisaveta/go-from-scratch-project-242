@@ -54,6 +54,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/testdata/testdirectory" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/cmd/hexlet-path-size" />
       <recent name="$PROJECT_DIR$/testdata" />

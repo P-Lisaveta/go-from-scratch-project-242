@@ -3,79 +3,59 @@ package code
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-type Options struct {
-	Recursive bool
-	Human     bool
-	All       bool
-}
-
-func GetPathSize(path string, options Options) (int64, error) {
+func GetPathSize(path string, recursive, human, all bool) (int64, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return 0, err
 	}
 
 	var size int64
-
-	// Файл
 	if !info.IsDir() {
-		if !options.All && strings.HasPrefix(info.Name(), ".") {
+		if !all && strings.HasPrefix(info.Name(), ".") {
 			return 0, nil
 		}
-		return info.Size(), nil
-	}
-
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, entry := range entries {
-		name := entry.Name()
-
-		if !options.All && strings.HasPrefix(name, ".") {
-			continue
+		size = info.Size()
+	} else {
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return 0, err
 		}
-
-		fullPath := path + string(os.PathSeparator) + name
-
-		if entry.IsDir() {
-			if options.Recursive {
-				subSize, err := GetPathSize(fullPath, options)
+		for _, entry := range entries {
+			if entry.IsDir() && recursive {
+				subSize, err := GetPathSize(filepath.Join(path, entry.Name()), recursive, human, all)
 				if err != nil {
 					return 0, err
 				}
 				size += subSize
 			}
-			continue
+			if !all && strings.HasPrefix(entry.Name(), ".") {
+				continue
+			}
+			fInfo, err := entry.Info()
+			if err != nil {
+				return 0, err
+			}
+			size += fInfo.Size()
 		}
-
-		fInfo, err := entry.Info()
-		if err != nil {
-			return 0, err
-		}
-		size += fInfo.Size()
 	}
-
 	return size, nil
 }
 
-func FormatSize(size int64, options Options) string {
+func FormatSize(size int64, human bool) string {
 	if size < 0 {
 		size = 0
 	}
-
-	if !options.Human || size < 1024 {
+	if !human || size < 1024 {
 		return fmt.Sprintf("%dB", size)
 	}
 
 	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
 	s := float64(size)
 	i := 0
-
 	for s >= 1024 && i < len(units)-1 {
 		s /= 1024
 		i++
