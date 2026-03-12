@@ -5,8 +5,9 @@ import (
     "fmt"
     "log"
     "os"
-	"code"
+
     "github.com/urfave/cli/v3"
+    "hexlet-path-size/code"
 )
 
 func main() {
@@ -39,7 +40,6 @@ func main() {
             },
         },
         Action: func(ctx context.Context, c *cli.Command) error {
-            // Показываем справку, если запрошен help
             if c.Bool("help") {
                 return cli.ShowAppHelp(c)
             }
@@ -50,19 +50,16 @@ func main() {
 
             path := c.Args().First()
             
-            // Проверяем существование пути
             if _, err := os.Stat(path); err != nil {
                 return fmt.Errorf("path does not exist: %s", path)
             }
 
-            // Вычисляем размер
-            size, err := GetSize(path, c.Bool("recursive"), c.Bool("all"))
+            size, err := code.GetPathSize(path, c.Bool("recursive"), c.Bool("all"))
             if err != nil {
                 return fmt.Errorf("error calculating size: %w", err)
             }
 
-            // Форматируем и выводим результат
-            formattedSize := FormatSize(size, c.Bool("human"))
+            formattedSize := code.FormatSize(size, c.Bool("human"))
             fmt.Printf("%s\t%s\n", formattedSize, path)
             return nil
         },
