@@ -7,7 +7,7 @@ import (
     "os"
 
     "github.com/urfave/cli/v3"
-    "hexlet-path-size/code"
+    "hexlet-path-size/internal/code"
 )
 
 func main() {
