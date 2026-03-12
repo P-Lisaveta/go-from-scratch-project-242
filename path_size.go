@@ -1,76 +1,85 @@
 package code
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
+    "fmt"
+    "os"
+    "path/filepath"
+    "strconv"
+    "strings"
 )
 
-func GetPathSize(path string, recursive, human, all bool) (string, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return "0B", err
-	}
+// FormatSize конвертирует размер в человекочитаемый формат
+func FormatSize(size int64, human bool) string {
+    if !human {
+        return strconv.FormatInt(size, 10) + "B"
+    }
 
-	var size int64
-	if !info.IsDir() {
-		if !all && strings.HasPrefix(info.Name(), ".") {
-			return "0B", nil
-		}
-		// Читаем ТОЛЬКО содержимое файла, игнорируем метаданные
-		f, err := os.Open(path)
-		if err != nil {
-			return "0B", err
-		}
-		defer f.Close()
-		stat, err := f.Stat()
-		if err != nil {
-			return "0B", err
-		}
-		size = stat.Size() // Логический размер
-		return fmt.Sprintf("%dB", size), nil
-	}
+    const unit = 1024
+    if size < unit {
+        return fmt.Sprintf("%dB", size)
+    }
 
-	// Директории - суммируем размеры вложенных файлов
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return "0B", err
-	}
+    // Находим подходящую единицу измерения
+    units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
+    sizeFloat := float64(size)
+    unitIndex := 0
 
-	for _, entry := range entries {
-		name := entry.Name()
-		if !all && strings.HasPrefix(name, ".") {
-			continue
-		}
+    for sizeFloat >= unit && unitIndex < len(units)-1 {
+        sizeFloat /= unit
+        unitIndex++
+    }
 
-		entryPath := filepath.Join(path, name)
-		entrySize, err := GetPathSize(entryPath, recursive, human, all)
-		if err != nil {
-			return "0B", err
-		}
-		sizeStr, _ := strconv.ParseInt(entrySize, 10, 64)
-		size += sizeStr
-	}
-	return fmt.Sprintf("%dB", size), nil
+    // Форматируем с одной десятичной цифрой
+    return fmt.Sprintf("%.1f%s", sizeFloat, units[unitIndex])
 }
 
-func FormatSize(size int64, human bool) string {
-	if size < 0 {
-		size = 0
-	}
-	if !human || size < 1024 {
-		return fmt.Sprintf("%dB", size)
-	}
+// GetSize вычисляет размер файла или директории
+func GetSize(path string, recursive, includeHidden bool) (int64, error) {
+    info, err := os.Stat(path)
+    if err != nil {
+        return 0, err
+    }
 
-	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
-	s := float64(size)
-	i := 0
-	for s >= 1024 && i < len(units)-1 {
-		s /= 1024
-		i++
-	}
+    // Если это файл - возвращаем его размер
+    if !info.IsDir() {
+        return info.Size(), nil
+    }
 
-	return fmt.Sprintf("%.1f%s", s, units[i])
+    // Если это директория - читаем содержимое
+    entries, err := os.ReadDir(path)
+    if err != nil {
+        return 0, err
+    }
+
+    var totalSize int64
+    for _, entry := range entries {
+        // Пропускаем скрытые файлы, если не указан флаг --all
+        if !includeHidden && strings.HasPrefix(entry.Name(), ".") {
+            continue
+        }
+
+        fullPath := filepath.Join(path, entry.Name())
+        
+        if entry.IsDir() {
+            if recursive {
+                // Рекурсивно обрабатываем поддиректорию
+                size, err := GetSize(fullPath, recursive, includeHidden)
+                if err != nil {
+                    // Продолжаем подсчёт даже если есть ошибки с отдельными файлами
+                    continue
+                }
+                totalSize += size
+            }
+            continue
+        }
+
+        // Получаем размер файла
+        fileInfo, err := entry.Info()
+        if err != nil {
+            continue
+        }
+        totalSize += fileInfo.Size()
+    }
+
+    return totalSize, nil
 }
