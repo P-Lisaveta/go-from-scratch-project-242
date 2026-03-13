@@ -33,11 +33,6 @@ func main() {
 				Usage:   "include hidden files and directories",
 				Value:   false,
 			},
-			&cli.BoolFlag{
-				Name:    "help",
-				Aliases: []string{"h"},
-				Usage:   "show help",
-			},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			if c.Bool("help") {
@@ -49,7 +44,6 @@ func main() {
 			}
 
 			path := c.Args().First()
-
 			if _, err := os.Stat(path); err != nil {
 				return fmt.Errorf("path does not exist: %s", path)
 			}
@@ -69,4 +63,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
