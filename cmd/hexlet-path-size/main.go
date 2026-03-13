@@ -48,7 +48,7 @@ func main() {
 				return fmt.Errorf("path does not exist: %s", path)
 			}
 
-			size, err := code.GetPathSize(path, c.Bool("recursive"), c.Bool("all"))
+			size, err := code.GetPathSize(path, c.Bool("recursive"), c.Bool("human"), c.Bool("all"))
 			if err != nil {
 				return fmt.Errorf("error calculating size: %w", err)
 			}

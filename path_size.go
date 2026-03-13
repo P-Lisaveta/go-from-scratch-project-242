@@ -31,8 +31,9 @@ func FormatSize(size int64, human bool) string {
 	return fmt.Sprintf("%.1f%s", sizeFloat, units[unitIndex])
 }
 
-// GetPathSize вычисляет размер файла или директории
-func GetPathSize(path string, recursive, includeHidden bool) (int64, error) {
+// GetPathSize вычисляет размер файла или директории.
+// Сигнатура включает флаг human для совместимости с внешними тестами/вызовами.
+func GetPathSize(path string, recursive, human, includeHidden bool) (int64, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return 0, err
@@ -57,7 +58,7 @@ func GetPathSize(path string, recursive, includeHidden bool) (int64, error) {
 
 		if entry.IsDir() {
 			if recursive {
-				size, err := GetPathSize(fullPath, recursive, includeHidden)
+				size, err := GetPathSize(fullPath, recursive, human, includeHidden)
 				if err != nil {
 					continue
 				}
