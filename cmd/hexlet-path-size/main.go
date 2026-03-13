@@ -53,8 +53,7 @@ func main() {
 				return fmt.Errorf("error calculating size: %w", err)
 			}
 
-			formattedSize := code.FormatSize(size, c.Bool("human"))
-			fmt.Printf("%s\t%s\n", formattedSize, path)
+			fmt.Printf("%s\t%s\n", size, path)
 			return nil
 		},
 	}
